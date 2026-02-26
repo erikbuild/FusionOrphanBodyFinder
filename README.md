@@ -2,6 +2,8 @@
 
 A Fusion 360 add-in that finds and fixes "orphan bodies" — loose BRepBodies sitting directly inside components that also contain subcomponents.
 
+[](images/FusionOrphanBodyFinder-demo.gif)
+
 ## The Problem
 
 In well-organized Fusion 360 designs, every "Body" lives inside its own component. But it's easy to accidentally leave bodies at the wrong level of the hierarchy — for example, a component that has both child subcomponents *and* direct bodies. These "orphan bodies" make it harder to manage visibility, materials, joints, and manufacturing outputs.
