@@ -2,7 +2,7 @@
 
 A Fusion 360 add-in that finds and fixes "orphan bodies" — loose BRepBodies sitting directly inside components that also contain subcomponents.
 
-[](images/FusionOrphanBodyFinder-demo.gif)
+![Demo Gif](images/FusionOrphanBodyFinder-demo.gif)
 
 ## The Problem
 
