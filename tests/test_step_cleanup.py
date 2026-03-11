@@ -54,6 +54,12 @@ class TestStripStepExtension(unittest.TestCase):
     def test_does_not_strip_footstep(self):
         self.assertEqual(_main.strip_step_extension('footstep'), 'footstep')
 
+    def test_cleans_trailing_space(self):
+        self.assertEqual(_main.strip_step_extension('Assembly .step'), 'Assembly')
+
+    def test_cleans_extra_spaces(self):
+        self.assertEqual(_main.strip_step_extension('Foo.step.step Bar'), 'Foo Bar')
+
 
 class MockBody:
     def __init__(self, name):
@@ -113,11 +119,14 @@ class TestFindStepNames(unittest.TestCase):
         child = MockComponent('Leaf', bodies=[MockBody('body1')])
         step_comp = MockComponent('Part.step', bodies=[MockBody('b1')],
                                   children=[MockOccurrence(child)])
-        root = MockComponent('Root', children=[MockOccurrence(step_comp)])
+        occ = MockOccurrence(step_comp)
+        root = MockComponent('Root', children=[occ])
 
         results = _main.find_step_names(root)
         names = [(r['name'], r['kind']) for r in results]
         self.assertIn(('Part.step', 'component'), names)
+        match = [r for r in results if r['name'] == 'Part.step'][0]
+        self.assertIs(match['occurrence'], occ)
 
     def test_finds_body_with_step_name(self):
         step_body = MockBody('Bracket.STEP (1)')
@@ -146,6 +155,18 @@ class TestFindStepNames(unittest.TestCase):
         results = _main.find_step_names(root)
         names = [(r['name'], r['kind']) for r in results]
         self.assertIn(('Part.STEP', 'body'), names)
+        match = [r for r in results if r['name'] == 'Part.STEP'][0]
+        self.assertIsNone(match['occurrence'])
+
+    def test_deduplicates_reused_components(self):
+        shared = MockComponent('Bracket.step', bodies=[MockBody('b1')])
+        occ1 = MockOccurrence(shared)
+        occ2 = MockOccurrence(shared)
+        root = MockComponent('Root', children=[occ1, occ2])
+
+        results = _main.find_step_names(root)
+        comp_results = [r for r in results if r['kind'] == 'component']
+        self.assertEqual(len(comp_results), 1)
 
 
 class TestStripSpecialChars(unittest.TestCase):
@@ -236,6 +257,16 @@ class TestFindSpecialCharNames(unittest.TestCase):
         results = _main.find_special_char_names(root)
         names = [(r['name'], r['kind']) for r in results]
         self.assertIn(('Part<1>', 'body'), names)
+
+    def test_deduplicates_reused_components(self):
+        shared = MockComponent('Part{1}', bodies=[MockBody('b1')])
+        occ1 = MockOccurrence(shared)
+        occ2 = MockOccurrence(shared)
+        root = MockComponent('Root', children=[occ1, occ2])
+
+        results = _main.find_special_char_names(root)
+        comp_results = [r for r in results if r['kind'] == 'component']
+        self.assertEqual(len(comp_results), 1)
 
 
 class TestStripVersionNumber(unittest.TestCase):
@@ -329,6 +360,16 @@ class TestFindVersionNumberNames(unittest.TestCase):
         names = [(r['name'], r['kind']) for r in results]
         self.assertIn(('Part v5', 'body'), names)
 
+    def test_deduplicates_reused_components(self):
+        shared = MockComponent('Part v2', bodies=[MockBody('b1')])
+        occ1 = MockOccurrence(shared)
+        occ2 = MockOccurrence(shared)
+        root = MockComponent('Root', children=[occ1, occ2])
+
+        results = _main.find_version_number_names(root)
+        comp_results = [r for r in results if r['kind'] == 'component']
+        self.assertEqual(len(comp_results), 1)
+
 
 class TestStripCopySuffixes(unittest.TestCase):
     def test_single_suffix(self):
@@ -417,6 +458,16 @@ class TestFindCopySuffixNames(unittest.TestCase):
         results = _main.find_copy_suffix_names(root)
         names = [(r['name'], r['kind']) for r in results]
         self.assertIn(('Part (5)', 'body'), names)
+
+    def test_deduplicates_reused_components(self):
+        shared = MockComponent('Part (1)', bodies=[MockBody('b1')])
+        occ1 = MockOccurrence(shared)
+        occ2 = MockOccurrence(shared)
+        root = MockComponent('Root', children=[occ1, occ2])
+
+        results = _main.find_copy_suffix_names(root)
+        comp_results = [r for r in results if r['kind'] == 'component']
+        self.assertEqual(len(comp_results), 1)
 
 
 if __name__ == '__main__':

@@ -356,7 +356,8 @@ _COPY_SUFFIX_PATTERN = re.compile(r'(\s+\(\d+\))+$')
 
 
 def strip_step_extension(name):
-    return _STEP_PATTERN.sub('', name)
+    result = _STEP_PATTERN.sub('', name)
+    return re.sub(r'  +', ' ', result).strip()
 
 
 def has_step_extension(name):
@@ -365,13 +366,20 @@ def has_step_extension(name):
 
 def find_step_names(root_comp):
     results = []
+    seen_tokens = set()
 
-    def check_component(comp):
+    def check_component(comp, occ=None):
+        token = comp.entityToken
+        if token in seen_tokens:
+            return
+        seen_tokens.add(token)
+
         if has_step_extension(comp.name):
             results.append({
                 'name': comp.name,
                 'kind': 'component',
                 'target': comp,
+                'occurrence': occ,
             })
         for body in comp.bRepBodies:
             if has_step_extension(body.name):
@@ -379,6 +387,7 @@ def find_step_names(root_comp):
                     'name': body.name,
                     'kind': 'body',
                     'target': body,
+                    'occurrence': occ,
                 })
 
     # Only check root's bodies, not its name (root name is the Fusion file name)
@@ -388,9 +397,10 @@ def find_step_names(root_comp):
                 'name': body.name,
                 'kind': 'body',
                 'target': body,
+                'occurrence': None,
             })
     for occ in root_comp.allOccurrences:
-        check_component(occ.component)
+        check_component(occ.component, occ)
 
     return results
 
@@ -405,8 +415,14 @@ def has_special_chars(name):
 
 def find_special_char_names(root_comp):
     results = []
+    seen_tokens = set()
 
     def check_component(comp, occ=None):
+        token = comp.entityToken
+        if token in seen_tokens:
+            return
+        seen_tokens.add(token)
+
         if has_special_chars(comp.name):
             results.append({
                 'name': comp.name,
@@ -491,8 +507,14 @@ def has_version_number(name):
 
 def find_version_number_names(root_comp):
     results = []
+    seen_tokens = set()
 
     def check_component(comp, occ=None):
+        token = comp.entityToken
+        if token in seen_tokens:
+            return
+        seen_tokens.add(token)
+
         if has_version_number(comp.name):
             results.append({
                 'name': comp.name,
@@ -576,8 +598,14 @@ def has_copy_suffixes(name):
 
 def find_copy_suffix_names(root_comp):
     results = []
+    seen_tokens = set()
 
     def check_component(comp, occ=None):
+        token = comp.entityToken
+        if token in seen_tokens:
+            return
+        seen_tokens.add(token)
+
         if has_copy_suffixes(comp.name):
             results.append({
                 'name': comp.name,
@@ -659,10 +687,14 @@ def clean_step_names(root_comp):
     renamed = 0
     for entry in entries:
         old_name = entry['name']
-        new_name = strip_step_extension(old_name)
+        suggested_name = strip_step_extension(old_name)
         kind = entry['kind']
+        occ = entry['occurrence']
 
-        msg = "Rename {} '{}' to '{}'?".format(kind, old_name, new_name)
+        if occ:
+            highlight_component(occ)
+
+        msg = "Rename {} '{}' to '{}'?".format(kind, old_name, suggested_name)
         result = _ui.messageBox(
             msg, 'Clean .step Names',
             adsk.core.MessageBoxButtonTypes.YesNoCancelButtonType,
@@ -673,7 +705,17 @@ def clean_step_names(root_comp):
             break
 
         if result == adsk.core.DialogResults.DialogYes:
-            entry['target'].name = new_name
-            renamed += 1
+            ret_val, cancelled = _ui.inputBox(
+                "{} '{}'\n\nEnter cleaned name:".format(kind.capitalize(), old_name),
+                'Rename', suggested_name
+            )
+            if cancelled:
+                continue
 
+            new_name = ret_val.strip()
+            if new_name:
+                entry['target'].name = new_name
+                renamed += 1
+
+    _ui.activeSelections.clear()
     return renamed
