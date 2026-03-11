@@ -133,7 +133,7 @@ class CommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
             cleanup_group.children.addBoolValueInput('cleanStepNames', 'Clean .step from names', True, '', False)
             cleanup_group.children.addTextBoxCommandInput('stepExample', '', '<i>Bracket.STEP (1)</i> &rarr; <i>Bracket (1)</i>', 1, True)
             cleanup_group.children.addBoolValueInput('cleanSpecialChars', 'Clean special characters', True, '', False)
-            cleanup_group.children.addTextBoxCommandInput('specialExample', '', '<i>Bolt M6×1.0 {rev}</i> &rarr; <i>Bolt M61.0 rev</i>', 1, True)
+            cleanup_group.children.addTextBoxCommandInput('specialExample', '', '<i>M3x10** {rev}</i> &rarr; <i>M3x10 rev</i>', 1, True)
             cleanup_group.children.addBoolValueInput('cleanVersionNumbers', 'Clean version numbers (v1, v2, ...)', True, '', False)
             cleanup_group.children.addTextBoxCommandInput('versionExample', '', '<i>Bracket v2</i> &rarr; <i>Bracket</i>', 1, True)
             cleanup_group.children.addBoolValueInput('cleanCopySuffixes', 'Clean copy suffixes ((1), (2), ...)', True, '', False)
@@ -381,7 +381,14 @@ def find_step_names(root_comp):
                     'target': body,
                 })
 
-    check_component(root_comp)
+    # Only check root's bodies, not its name (root name is the Fusion file name)
+    for body in root_comp.bRepBodies:
+        if has_step_extension(body.name):
+            results.append({
+                'name': body.name,
+                'kind': 'body',
+                'target': body,
+            })
     for occ in root_comp.allOccurrences:
         check_component(occ.component)
 
@@ -416,7 +423,15 @@ def find_special_char_names(root_comp):
                     'occurrence': occ,
                 })
 
-    check_component(root_comp)
+    # Only check root's bodies, not its name (root name is the Fusion file name)
+    for body in root_comp.bRepBodies:
+        if has_special_chars(body.name):
+            results.append({
+                'name': body.name,
+                'kind': 'body',
+                'target': body,
+                'occurrence': None,
+            })
     for occ in root_comp.allOccurrences:
         check_component(occ.component, occ)
 
@@ -494,7 +509,15 @@ def find_version_number_names(root_comp):
                     'occurrence': occ,
                 })
 
-    check_component(root_comp)
+    # Only check root's bodies, not its name (root name is the Fusion file name)
+    for body in root_comp.bRepBodies:
+        if has_version_number(body.name):
+            results.append({
+                'name': body.name,
+                'kind': 'body',
+                'target': body,
+                'occurrence': None,
+            })
     for occ in root_comp.allOccurrences:
         check_component(occ.component, occ)
 
@@ -571,7 +594,15 @@ def find_copy_suffix_names(root_comp):
                     'occurrence': occ,
                 })
 
-    check_component(root_comp)
+    # Only check root's bodies, not its name (root name is the Fusion file name)
+    for body in root_comp.bRepBodies:
+        if has_copy_suffixes(body.name):
+            results.append({
+                'name': body.name,
+                'kind': 'body',
+                'target': body,
+                'occurrence': None,
+            })
     for occ in root_comp.allOccurrences:
         check_component(occ.component, occ)
 

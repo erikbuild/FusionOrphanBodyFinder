@@ -135,11 +135,11 @@ class TestFindStepNames(unittest.TestCase):
         results = _main.find_step_names(root)
         self.assertEqual(results, [])
 
-    def test_includes_root_component(self):
+    def test_skips_root_component_name(self):
         root = MockComponent('Assembly.step', bodies=[MockBody('clean')])
         results = _main.find_step_names(root)
         names = [(r['name'], r['kind']) for r in results]
-        self.assertIn(('Assembly.step', 'component'), names)
+        self.assertNotIn(('Assembly.step', 'component'), names)
 
     def test_includes_root_body(self):
         root = MockComponent('Root', bodies=[MockBody('Part.STEP')])
@@ -225,13 +225,11 @@ class TestFindSpecialCharNames(unittest.TestCase):
         results = _main.find_special_char_names(root)
         self.assertEqual(results, [])
 
-    def test_includes_root_component(self):
+    def test_skips_root_component_name(self):
         root = MockComponent('Assembly{bad}', bodies=[MockBody('clean')])
         results = _main.find_special_char_names(root)
         names = [(r['name'], r['kind']) for r in results]
-        self.assertIn(('Assembly{bad}', 'component'), names)
-        match = [r for r in results if r['name'] == 'Assembly{bad}'][0]
-        self.assertIsNone(match['occurrence'])
+        self.assertNotIn(('Assembly{bad}', 'component'), names)
 
     def test_includes_root_body(self):
         root = MockComponent('Root', bodies=[MockBody('Part<1>')])
@@ -319,13 +317,11 @@ class TestFindVersionNumberNames(unittest.TestCase):
         results = _main.find_version_number_names(root)
         self.assertEqual(results, [])
 
-    def test_includes_root_component(self):
+    def test_skips_root_component_name(self):
         root = MockComponent('Assembly v1', bodies=[MockBody('clean')])
         results = _main.find_version_number_names(root)
         names = [(r['name'], r['kind']) for r in results]
-        self.assertIn(('Assembly v1', 'component'), names)
-        match = [r for r in results if r['name'] == 'Assembly v1'][0]
-        self.assertIsNone(match['occurrence'])
+        self.assertNotIn(('Assembly v1', 'component'), names)
 
     def test_includes_root_body(self):
         root = MockComponent('Root', bodies=[MockBody('Part v5')])
@@ -410,13 +406,11 @@ class TestFindCopySuffixNames(unittest.TestCase):
         results = _main.find_copy_suffix_names(root)
         self.assertEqual(results, [])
 
-    def test_includes_root_component(self):
+    def test_skips_root_component_name(self):
         root = MockComponent('Assembly (1)', bodies=[MockBody('clean')])
         results = _main.find_copy_suffix_names(root)
         names = [(r['name'], r['kind']) for r in results]
-        self.assertIn(('Assembly (1)', 'component'), names)
-        match = [r for r in results if r['name'] == 'Assembly (1)'][0]
-        self.assertIsNone(match['occurrence'])
+        self.assertNotIn(('Assembly (1)', 'component'), names)
 
     def test_includes_root_body(self):
         root = MockComponent('Root', bodies=[MockBody('Part (5)')])
