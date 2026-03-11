@@ -1,5 +1,5 @@
 {
-    "use_custom_panel": false,
+    "use_custom_panel": true,
     "panel_id": "CustomPlugins_Panel",
-    "panel_name": "CUSTOM PLUGINS"
+    "panel_name": "ERIKBUILD"
 }

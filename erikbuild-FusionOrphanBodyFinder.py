@@ -81,7 +81,9 @@ def run(context):
             _active_panel_id = panel.id
             existing = panel.controls.itemById(CMD_ID)
             if not existing:
-                panel.controls.addCommand(cmd_def)
+                ctrl = panel.controls.addCommand(cmd_def)
+                ctrl.isPromotedByDefault = True
+                ctrl.isPromoted = True
 
     except:
         if _ui:
